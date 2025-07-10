@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, SafeAreaView } from 'react-native';
-import { Upload, FileText, Download, Edit3 } from 'lucide-react-native';
+import { Upload, FileText, Download, LocationEdit as Edit3 } from 'lucide-react-native';
 
 export default function FileManagerScreen() {
   return (
