@@ -1,18 +1,24 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
 interface Message {
   id: string;
-  text: string;
+  text?: string;
   isUser: boolean;
-  timestamp?: Date;
+  timestamp: Date;
 }
 
 const MessageBubble = ({ message }: { message: Message }) => {
   const isUser = message.isUser;
   
+  if (!message.text) return null;
+  
   return (
-    <View style={[styles.container, isUser ? styles.userContainer : styles.botContainer]}>
+    <Animated.View 
+      entering={FadeInUp.duration(300).springify()}
+      style={[styles.container, isUser ? styles.userContainer : styles.botContainer]}
+    >
       <View
         style={[
           styles.bubble,
@@ -23,7 +29,10 @@ const MessageBubble = ({ message }: { message: Message }) => {
           {message.text}
         </Text>
       </View>
-    </View>
+      <Text style={[styles.timestamp, isUser ? styles.userTimestamp : styles.botTimestamp]}>
+        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+      </Text>
+    </Animated.View>
   );
 };
 
@@ -71,6 +80,19 @@ const styles = StyleSheet.create({
   botText: {
     color: '#fff',
     fontWeight: '400',
+  },
+  timestamp: {
+    fontSize: 12,
+    marginTop: 4,
+    marginHorizontal: 8,
+  },
+  userTimestamp: {
+    color: '#888',
+    textAlign: 'right',
+  },
+  botTimestamp: {
+    color: '#888',
+    textAlign: 'left',
   },
 });
 

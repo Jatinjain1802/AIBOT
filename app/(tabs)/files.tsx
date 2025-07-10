@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -13,8 +13,11 @@ import {
   Upload, 
   FileText, 
   Eye,
-  Trash2
+  Trash2,
+  Search,
+  Filter
 } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
 
 interface UploadedFile {
@@ -26,8 +29,40 @@ interface UploadedFile {
   uploadDate: Date;
 }
 
+const FILES_STORAGE_KEY = '@uploaded_files';
+
 export default function FilesScreen() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadUploadedFiles();
+  }, []);
+
+  const loadUploadedFiles = async () => {
+    try {
+      const savedFiles = await AsyncStorage.getItem(FILES_STORAGE_KEY);
+      if (savedFiles) {
+        const parsedFiles = JSON.parse(savedFiles).map((file: any) => ({
+          ...file,
+          uploadDate: new Date(file.uploadDate)
+        }));
+        setUploadedFiles(parsedFiles);
+      }
+    } catch (error) {
+      console.error('Error loading uploaded files:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveUploadedFiles = async (files: UploadedFile[]) => {
+    try {
+      await AsyncStorage.setItem(FILES_STORAGE_KEY, JSON.stringify(files));
+    } catch (error) {
+      console.error('Error saving uploaded files:', error);
+    }
+  };
 
   const handleFileUpload = async () => {
     try {
@@ -39,6 +74,18 @@ export default function FilesScreen() {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
+        
+        // Check file size (limit to 10MB for demo)
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size && file.size > maxSize) {
+          if (Platform.OS === 'web') {
+            alert('File size must be less than 10MB');
+          } else {
+            Alert.alert('File Too Large', 'File size must be less than 10MB');
+          }
+          return;
+        }
+
         const newFile: UploadedFile = {
           id: Date.now().toString(),
           name: file.name,
@@ -48,7 +95,9 @@ export default function FilesScreen() {
           uploadDate: new Date(),
         };
 
-        setUploadedFiles(prev => [newFile, ...prev]);
+        const newFiles = [newFile, ...uploadedFiles];
+        setUploadedFiles(newFiles);
+        await saveUploadedFiles(newFiles);
         
         if (Platform.OS === 'web') {
           alert(`File "${file.name}" uploaded successfully!`);
@@ -70,8 +119,10 @@ export default function FilesScreen() {
     const file = uploadedFiles.find(f => f.id === fileId);
     if (!file) return;
 
-    const deleteAction = () => {
-      setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+    const deleteAction = async () => {
+      const newFiles = uploadedFiles.filter(f => f.id !== fileId);
+      setUploadedFiles(newFiles);
+      await saveUploadedFiles(newFiles);
     };
 
     if (Platform.OS === 'web') {
@@ -85,6 +136,28 @@ export default function FilesScreen() {
         [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Delete', style: 'destructive', onPress: deleteAction },
+        ]
+      );
+    }
+  };
+
+  const clearAllFiles = () => {
+    const clearAction = async () => {
+      setUploadedFiles([]);
+      await saveUploadedFiles([]);
+    };
+
+    if (Platform.OS === 'web') {
+      if (confirm('Are you sure you want to delete all files? This cannot be undone.')) {
+        clearAction();
+      }
+    } else {
+      Alert.alert(
+        'Clear All Files',
+        'Are you sure you want to delete all files? This cannot be undone.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Clear All', style: 'destructive', onPress: clearAction },
         ]
       );
     }
@@ -105,10 +178,44 @@ export default function FilesScreen() {
     });
   };
 
+  const getTotalSize = () => {
+    const total = uploadedFiles.reduce((sum, file) => sum + file.size, 0);
+    return formatFileSize(total);
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading files...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Your Files</Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.title}>Your Files</Text>
+          {uploadedFiles.length > 0 && (
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={clearAllFiles}
+              activeOpacity={0.7}
+            >
+              <Trash2 size={18} color="#ff4444" />
+            </TouchableOpacity>
+          )}
+        </View>
+        
+        {uploadedFiles.length > 0 && (
+          <View style={styles.statsContainer}>
+            <Text style={styles.statsText}>
+              {uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} • {getTotalSize()}
+            </Text>
+          </View>
+        )}
       </View>
       
       <View style={styles.content}>
@@ -126,7 +233,7 @@ export default function FilesScreen() {
             <FileText size={64} color="#444" />
             <Text style={styles.emptyTitle}>No files uploaded yet</Text>
             <Text style={styles.emptySubtitle}>
-              Upload documents, spreadsheets, or any file type to get started with AI-powered file analysis
+              Upload documents, spreadsheets, images, or any file type to get started with AI-powered file analysis
             </Text>
           </View>
         ) : (
@@ -143,6 +250,9 @@ export default function FilesScreen() {
                   </Text>
                   <Text style={styles.fileDetails}>
                     {formatFileSize(file.size)} • {formatDate(file.uploadDate)}
+                  </Text>
+                  <Text style={styles.fileType}>
+                    {file.type.split('/')[0] || 'Unknown'} file
                   </Text>
                 </View>
                 
@@ -184,17 +294,46 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1a1a1a',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#888',
+    fontSize: 16,
+  },
   header: {
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: {
     color: '#fff',
     fontSize: 24,
     fontWeight: '700',
     letterSpacing: -0.5,
+  },
+  clearButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statsContainer: {
+    marginTop: 8,
+  },
+  statsText: {
+    color: '#888',
+    fontSize: 14,
   },
   content: {
     flex: 1,
@@ -275,6 +414,13 @@ const styles = StyleSheet.create({
   fileDetails: {
     color: '#888',
     fontSize: 14,
+    marginBottom: 2,
+  },
+  fileType: {
+    color: '#10a37f',
+    fontSize: 12,
+    fontWeight: '500',
+    textTransform: 'capitalize',
   },
   fileActions: {
     flexDirection: 'row',

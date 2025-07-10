@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ChatScreen from '@/components/ChatScreen';
 
 interface UploadedFile {
@@ -11,13 +12,50 @@ interface UploadedFile {
   uploadDate: Date;
 }
 
+const FILES_STORAGE_KEY = '@uploaded_files';
+
 export default function HomeScreen() {
-  // For now, we'll use empty array. In a real app, this would be shared state
-  const [uploadedFiles] = useState<UploadedFile[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+
+  useEffect(() => {
+    loadUploadedFiles();
+  }, []);
+
+  const loadUploadedFiles = async () => {
+    try {
+      const savedFiles = await AsyncStorage.getItem(FILES_STORAGE_KEY);
+      if (savedFiles) {
+        const parsedFiles = JSON.parse(savedFiles).map((file: any) => ({
+          ...file,
+          uploadDate: new Date(file.uploadDate)
+        }));
+        setUploadedFiles(parsedFiles);
+      }
+    } catch (error) {
+      console.error('Error loading uploaded files:', error);
+    }
+  };
+
+  const saveUploadedFiles = async (files: UploadedFile[]) => {
+    try {
+      await AsyncStorage.setItem(FILES_STORAGE_KEY, JSON.stringify(files));
+    } catch (error) {
+      console.error('Error saving uploaded files:', error);
+    }
+  };
+
+  const addUploadedFile = (file: UploadedFile) => {
+    const newFiles = [file, ...uploadedFiles];
+    setUploadedFiles(newFiles);
+    saveUploadedFiles(newFiles);
+  };
 
   return (
     <View style={styles.container}>
-      <ChatScreen uploadedFiles={uploadedFiles} />
+      <ChatScreen 
+        uploadedFiles={uploadedFiles} 
+        onFileUpload={addUploadedFile}
+      />
     </View>
   );
 }
