@@ -7,7 +7,8 @@ import {
   Text, 
   View,
   SafeAreaView,
-  Dimensions
+  Dimensions,
+  Keyboard
 } from 'react-native';
 import { Menu } from 'lucide-react-native';
 import MessageBubble from './MessageBubble';
@@ -56,6 +57,27 @@ const ChatScreen = () => {
   const [messages, setMessages] = useState(initialMessages);
   const flatListRef = useRef<FlatList>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardDidHideListener?.remove();
+      keyboardDidShowListener?.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (flatListRef.current && messages.length > 0) {
@@ -63,7 +85,7 @@ const ChatScreen = () => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  }, [messages]);
+  }, [messages, keyboardHeight]);
 
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
@@ -128,36 +150,38 @@ const ChatScreen = () => {
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <FlatList
-          ref={flatListRef}
-          data={messages.slice(1)} // Skip the initial greeting for empty state
-          keyExtractor={(item) => item.id}
-          renderItem={renderMessage}
-          contentContainerStyle={[
-            styles.messagesList,
-            messages.length <= 1 && styles.messagesListEmpty
-          ]}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={renderEmptyState}
-          maintainVisibleContentPosition={{
-            minIndexForVisible: 0,
-            autoscrollToTopThreshold: 10,
-          }}
-        />
-        
-        {isTyping && (
-          <View style={styles.typingContainer}>
-            <View style={styles.typingBubble}>
-              <View style={styles.typingDots}>
-                <View style={[styles.dot, styles.dot1]} />
-                <View style={[styles.dot, styles.dot2]} />
-                <View style={[styles.dot, styles.dot3]} />
+        <View style={styles.messagesContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={messages.slice(1)} // Skip the initial greeting for empty state
+            keyExtractor={(item) => item.id}
+            renderItem={renderMessage}
+            contentContainerStyle={[
+              styles.messagesList,
+              messages.length <= 1 && styles.messagesListEmpty
+            ]}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={renderEmptyState}
+            maintainVisibleContentPosition={{
+              minIndexForVisible: 0,
+              autoscrollToTopThreshold: 10,
+            }}
+          />
+          
+          {isTyping && (
+            <View style={styles.typingContainer}>
+              <View style={styles.typingBubble}>
+                <View style={styles.typingDots}>
+                  <View style={[styles.dot, styles.dot1]} />
+                  <View style={[styles.dot, styles.dot2]} />
+                  <View style={[styles.dot, styles.dot3]} />
+                </View>
               </View>
             </View>
-          </View>
-        )}
+          )}
+        </View>
         
         <MessageInput onSend={handleSend} isLoading={isTyping} />
       </KeyboardAvoidingView>
@@ -192,9 +216,13 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
+  messagesContainer: {
+    flex: 1,
+  },
   messagesList: {
     paddingHorizontal: 16,
     paddingTop: 16,
+    paddingBottom: 16,
   },
   messagesListEmpty: {
     flexGrow: 1,

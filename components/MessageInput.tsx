@@ -52,16 +52,18 @@ const MessageInput = ({ onSend, isLoading }: MessageInputProps) => {
             blurOnSubmit={false}
           />
           
-          <TouchableOpacity 
-            style={styles.attachIconButton}
-            disabled={isLoading}
-            activeOpacity={0.7}
-          >
-            <Paperclip size={18} color="#666" />
-          </TouchableOpacity>
+          {!canSend && !isLoading && (
+            <TouchableOpacity 
+              style={styles.attachIconButton}
+              disabled={isLoading}
+              activeOpacity={0.7}
+            >
+              <Paperclip size={18} color="#666" />
+            </TouchableOpacity>
+          )}
         </View>
         
-        {canSend ? (
+        {canSend && (
           <TouchableOpacity 
             style={styles.sendButton}
             onPress={handleSend}
@@ -69,11 +71,13 @@ const MessageInput = ({ onSend, isLoading }: MessageInputProps) => {
           >
             <Send size={18} color="#fff" />
           </TouchableOpacity>
-        ) : isLoading ? (
+        )}
+        
+        {isLoading && (
           <View style={styles.loadingButton}>
             <ActivityIndicator size="small" color="#10a37f" />
           </View>
-        ) : null}
+        )}
       </View>
     </View>
   );
@@ -134,6 +138,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 2,
+    shadowColor: '#10a37f',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   loadingButton: {
     width: 36,
