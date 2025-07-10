@@ -1,6 +1,13 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { ActivityIndicator, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { 
+  StyleSheet, 
+  TextInput, 
+  TouchableOpacity, 
+  View,
+  Platform,
+  ActivityIndicator
+} from 'react-native';
+import { Send, Plus, Paperclip } from 'lucide-react-native';
 
 interface MessageInputProps {
   onSend: (text: string) => Promise<void>;
@@ -12,33 +19,60 @@ const MessageInput = ({ onSend, isLoading }: MessageInputProps) => {
 
   const handleSend = async () => {
     if (!text.trim() || isLoading) return;
-    await onSend(text);
+    const messageText = text.trim();
     setText('');
+    await onSend(messageText);
   };
 
+  const canSend = text.trim().length > 0 && !isLoading;
+
   return (
-    <View style={styles.inputBar}>
-      <TouchableOpacity style={styles.iconBtn} disabled={isLoading}>
-        <Ionicons name="image" size={24} color="#aaa" />
-      </TouchableOpacity>
+    <View style={styles.container}>
       <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Type a message..."
-          value={text}
-          onChangeText={setText}
-          onSubmitEditing={handleSend}
-          returnKeyType="send"
-          placeholderTextColor="#aaa"
-          editable={!isLoading}
-        />
-        {text.trim().length > 0 && !isLoading ? (
-          <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
-            <Ionicons name="send" size={22} color="#fff" />
+        <TouchableOpacity 
+          style={styles.attachButton}
+          disabled={isLoading}
+          activeOpacity={0.7}
+        >
+          <Plus size={20} color="#888" />
+        </TouchableOpacity>
+        
+        <View style={styles.textInputContainer}>
+          <TextInput
+            style={styles.textInput}
+            placeholder="Message SmartFileChat..."
+            placeholderTextColor="#666"
+            value={text}
+            onChangeText={setText}
+            multiline
+            maxLength={2000}
+            editable={!isLoading}
+            returnKeyType="send"
+            onSubmitEditing={handleSend}
+            blurOnSubmit={false}
+          />
+          
+          <TouchableOpacity 
+            style={styles.attachIconButton}
+            disabled={isLoading}
+            activeOpacity={0.7}
+          >
+            <Paperclip size={18} color="#666" />
           </TouchableOpacity>
-        ) : null}
-        {isLoading ? (
-          <ActivityIndicator size="small" color="#10a37f" style={{ marginLeft: 8 }} />
+        </View>
+        
+        {canSend ? (
+          <TouchableOpacity 
+            style={styles.sendButton}
+            onPress={handleSend}
+            activeOpacity={0.8}
+          >
+            <Send size={18} color="#fff" />
+          </TouchableOpacity>
+        ) : isLoading ? (
+          <View style={styles.loadingButton}>
+            <ActivityIndicator size="small" color="#10a37f" />
+          </View>
         ) : null}
       </View>
     </View>
@@ -46,46 +80,69 @@ const MessageInput = ({ onSend, isLoading }: MessageInputProps) => {
 };
 
 const styles = StyleSheet.create({
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#232325',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-  },
-  iconBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#444',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
+  container: {
+    backgroundColor: '#1a1a1a',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 12,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
   },
   inputContainer: {
-    flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#444',
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
+    alignItems: 'flex-end',
+    gap: 8,
   },
-  input: {
-    flex: 1,
-    color: '#fff',
-    fontSize: 18,
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    marginRight: 8,
-  },
-  sendBtn: {
-    backgroundColor: '#10a37f',
-    borderRadius: 22,
-    width: 44,
-    height: 44,
+  attachButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2a2a2a',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 2,
+  },
+  textInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    backgroundColor: '#2a2a2a',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    minHeight: 40,
+    maxHeight: 120,
+  },
+  textInput: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 16,
+    lineHeight: 20,
+    paddingVertical: 6,
+    paddingRight: 8,
+    textAlignVertical: 'center',
+  },
+  attachIconButton: {
+    padding: 4,
+    marginBottom: 2,
+  },
+  sendButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#10a37f',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  loadingButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
   },
 });
 

@@ -5,49 +5,60 @@ interface Message {
   id: string;
   text: string;
   isUser: boolean;
+  timestamp?: Date;
 }
 
 const MessageBubble = ({ message }: { message: Message }) => {
   const isUser = message.isUser;
+  
   return (
-    <View
-      style={[
-        styles.bubble,
-        isUser ? styles.userBubble : styles.botBubble,
-        isUser ? styles.alignRight : styles.alignLeft,
-      ]}
-    >
-      <Text style={[styles.text, isUser ? styles.userText : styles.botText]}>{message.text}</Text>
+    <View style={[styles.container, isUser ? styles.userContainer : styles.botContainer]}>
+      <View
+        style={[
+          styles.bubble,
+          isUser ? styles.userBubble : styles.botBubble,
+        ]}
+      >
+        <Text style={[styles.text, isUser ? styles.userText : styles.botText]}>
+          {message.text}
+        </Text>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  bubble: {
-    maxWidth: '80%',
-    padding: 14,
-    borderRadius: 18,
+  container: {
     marginVertical: 4,
+    paddingHorizontal: 4,
+  },
+  userContainer: {
+    alignItems: 'flex-end',
+  },
+  botContainer: {
+    alignItems: 'flex-start',
+  },
+  bubble: {
+    maxWidth: '85%',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
     shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
   },
   userBubble: {
     backgroundColor: '#10a37f',
-    alignSelf: 'flex-end',
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: 6,
   },
   botBubble: {
-    backgroundColor: '#ececf1',
-    alignSelf: 'flex-start',
-    borderBottomLeftRadius: 4,
-  },
-  alignRight: {
-    alignSelf: 'flex-end',
-  },
-  alignLeft: {
-    alignSelf: 'flex-start',
+    backgroundColor: '#2a2a2a',
+    borderBottomLeftRadius: 6,
   },
   text: {
     fontSize: 16,
@@ -55,9 +66,11 @@ const styles = StyleSheet.create({
   },
   userText: {
     color: '#fff',
+    fontWeight: '500',
   },
   botText: {
-    color: '#222',
+    color: '#fff',
+    fontWeight: '400',
   },
 });
 

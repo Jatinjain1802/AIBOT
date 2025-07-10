@@ -1,11 +1,11 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import ChatScreen from '@/components/ChatScreen';
+import FileManagerScreen from '@/components/FileManagerScreen';
 
-export default function HomeScreen() {
+export default function FilesScreen() {
   return (
     <View style={styles.container}>
-      <ChatScreen />
+      <FileManagerScreen />
     </View>
   );
 }
