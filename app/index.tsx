@@ -1,11 +1,18 @@
 import React from 'react';
-import { Platform, SafeAreaView, StatusBar } from 'react-native';
-import MainScreen from '../components/MainScreen';
+import { StyleSheet, View } from 'react-native';
+import MainScreen from '@/components/MainScreen';
 
-export default function Page() {
+export default function HomeScreen() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#18181a', paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }}>
+    <View style={styles.container}>
       <MainScreen />
-    </SafeAreaView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+  },
+});
