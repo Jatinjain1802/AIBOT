@@ -9,14 +9,7 @@ import {
   Alert,
   Platform
 } from 'react-native';
-import { 
-  Upload, 
-  FileText, 
-  Eye,
-  Trash2,
-  Search,
-  Filter
-} from 'lucide-react-native';
+import { Upload, FileText, Eye, Trash2, Search, ListFilter as Filter } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
 
