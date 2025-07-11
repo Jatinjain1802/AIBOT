@@ -12,6 +12,9 @@ import {
 import { Upload, FileText, Eye, Trash2, Search, ListFilter as Filter } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import * as MediaLibrary from 'expo-media-library';
 
 interface UploadedFile {
   id: string;
@@ -104,6 +107,67 @@ export default function FilesScreen() {
         alert('Error uploading file. Please try again.');
       } else {
         Alert.alert('Error', 'Error uploading file. Please try again.');
+      }
+    }
+  };
+
+  const handleDownloadFile = async (file: UploadedFile) => {
+    try {
+      if (Platform.OS === 'web') {
+        // For web, create a download link
+        const link = document.createElement('a');
+        link.href = file.uri;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+      }
+
+      // For mobile platforms
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        if (Platform.OS === 'web') {
+          alert('Permission required to save files to your device.');
+        } else {
+          Alert.alert('Permission Required', 'Please grant permission to save files to your device.');
+        }
+        return;
+      }
+
+      // Download the file to a temporary location
+      const downloadResult = await FileSystem.downloadAsync(
+        file.uri,
+        FileSystem.documentDirectory + file.name
+      );
+
+      if (downloadResult.status === 200) {
+        // Check if sharing is available
+        const isAvailable = await Sharing.isAvailableAsync();
+        if (isAvailable) {
+          await Sharing.shareAsync(downloadResult.uri);
+        } else {
+          // Save to media library as fallback
+          await MediaLibrary.saveToLibraryAsync(downloadResult.uri);
+          if (Platform.OS === 'web') {
+            alert(`File saved: ${file.name}`);
+          } else {
+            Alert.alert('Success', `File saved to your device: ${file.name}`);
+          }
+        }
+      } else {
+        if (Platform.OS === 'web') {
+          alert('Failed to download file');
+        } else {
+          Alert.alert('Error', 'Failed to download file');
+        }
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      if (Platform.OS === 'web') {
+        alert('Failed to download file. Please try again.');
+      } else {
+        Alert.alert('Error', 'Failed to download file. Please try again.');
       }
     }
   };
@@ -252,17 +316,10 @@ export default function FilesScreen() {
                 <View style={styles.fileActions}>
                   <TouchableOpacity 
                     style={styles.actionButton}
-                    onPress={() => {
-                      // TODO: Implement file preview
-                      if (Platform.OS === 'web') {
-                        alert('File preview coming soon!');
-                      } else {
-                        Alert.alert('Info', 'File preview coming soon!');
-                      }
-                    }}
+                    onPress={() => handleDownloadFile(file)}
                     activeOpacity={0.7}
                   >
-                    <Eye size={18} color="#666" />
+                    <Eye size={18} color="#10a37f" />
                   </TouchableOpacity>
                   
                   <TouchableOpacity 
