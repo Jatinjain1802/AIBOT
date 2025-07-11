@@ -1,6 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Alert, Platform } from 'react-native';
 import { FileText, Image as ImageIcon, FileVideo, Music, Archive, File } from 'lucide-react-native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import * as MediaLibrary from 'expo-media-library';
 
 interface UploadedFile {
   id: string;
@@ -53,6 +56,50 @@ const FileMessage = ({ file, timestamp }: FileMessageProps) => {
     return 'File';
   };
 
+  const handleDownload = async () => {
+    try {
+      if (Platform.OS === 'web') {
+        // For web, create a download link
+        const link = document.createElement('a');
+        link.href = file.uri;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+      }
+
+      // For mobile platforms
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please grant permission to save files to your device.');
+        return;
+      }
+
+      // Download the file to a temporary location
+      const downloadResult = await FileSystem.downloadAsync(
+        file.uri,
+        FileSystem.documentDirectory + file.name
+      );
+
+      if (downloadResult.status === 200) {
+        // Check if sharing is available
+        const isAvailable = await Sharing.isAvailableAsync();
+        if (isAvailable) {
+          await Sharing.shareAsync(downloadResult.uri);
+        } else {
+          // Save to media library as fallback
+          await MediaLibrary.saveToLibraryAsync(downloadResult.uri);
+          Alert.alert('Success', `File saved to your device: ${file.name}`);
+        }
+      } else {
+        Alert.alert('Error', 'Failed to download file');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      Alert.alert('Error', 'Failed to download file. Please try again.');
+    }
+  };
   return (
     <View style={styles.container}>
       <View style={styles.fileMessage}>
@@ -75,8 +122,12 @@ const FileMessage = ({ file, timestamp }: FileMessageProps) => {
           </View>
         </View>
         
-        <TouchableOpacity style={styles.previewButton} activeOpacity={0.7}>
-          <Text style={styles.previewText}>View</Text>
+        <TouchableOpacity 
+          style={styles.previewButton} 
+          onPress={handleDownload}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.previewText}>Download</Text>
         </TouchableOpacity>
       </View>
       
