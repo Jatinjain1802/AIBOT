@@ -1,29 +1,28 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { 
-  FlatList, 
-  KeyboardAvoidingView, 
-  Platform, 
-  StyleSheet, 
-  Text, 
-  View,
-  Dimensions,
-  Keyboard,
-  TouchableOpacity,
-  Alert
-} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Animated, { 
-  useAnimatedStyle, 
-  useSharedValue, 
-  withSpring,
+import { Trash2 } from 'lucide-react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Alert,
+  Dimensions,
+  FlatList,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
   withRepeat,
-  withTiming,
-  interpolate
+  withTiming
 } from 'react-native-reanimated';
-import { Trash2, RotateCcw } from 'lucide-react-native';
+import FileMessage from './FileMessage';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
-import FileMessage from './FileMessage';
 
 const { height: screenHeight } = Dimensions.get('window');
 

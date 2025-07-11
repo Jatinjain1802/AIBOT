@@ -1,6 +1,6 @@
 import os
 from groq import Groq
-import openai
+# import openai
 from typing import Optional
 
 # Initialize clients
@@ -17,10 +17,10 @@ def initialize_clients():
         groq_client = Groq(api_key=groq_api_key)
     
     # Initialize OpenAI client (fallback)
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-    if openai_api_key:
-        openai.api_key = openai_api_key
-        openai_client = openai
+    # openai_api_key = os.getenv("OPENAI_API_KEY")
+    # if openai_api_key:
+    #     openai.api_key = openai_api_key
+    #     openai_client = openai
 
 # Initialize clients on import
 initialize_clients()
@@ -39,7 +39,7 @@ Document Content:
 
 User Question: {user_question}
 
-Please provide a helpful and accurate response based on the document content. If the question cannot be answered from the document, please say so clearly."""
+Please provide a helpful and accurate response based on the document content. You are an AI assistant that answers questions about a document and returns CSV tables if requested. If the question cannot be answered from the document, please say so clearly."""
         else:
             prompt = f"""You are a helpful AI assistant. Please answer the following question:
 
@@ -54,8 +54,8 @@ Please provide a helpful and accurate response based on the document content. If
                         {"role": "system", "content": "You are a helpful AI assistant."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_tokens=1000,
-                    temperature=0.7
+                    max_tokens=500,
+                    temperature=0.3
                 )
                 return response.choices[0].message.content
             except Exception as e:
