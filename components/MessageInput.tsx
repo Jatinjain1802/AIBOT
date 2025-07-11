@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Send, Plus, Paperclip } from 'lucide-react-native';
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 
 interface UploadedFile {
   id: string;
@@ -67,7 +68,7 @@ const MessageInput = ({ onSend, onFileUpload, isLoading }: MessageInputProps) =>
           name: file.name,
           size: file.size || 0,
           type: file.mimeType || 'unknown',
-          uri: file.uri,
+          uri: file.uri, // This will be the local file URI
           uploadDate: new Date(),
         };
 

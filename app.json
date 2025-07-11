@@ -25,6 +25,14 @@
     },
     "plugins": [
       "expo-router",
+     [
+       "expo-media-library",
+       {
+         "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to save downloaded files.",
+         "savePhotosPermission": "Allow $(PRODUCT_NAME) to save files to your photo library.",
+         "isAccessMediaLocationEnabled": true
+       }
+     ],
       [
         "expo-splash-screen",
         {
